@@ -87,4 +87,3 @@ A number of internal documentation files exist describing the project and intern
 - [General Project Structure](ProjectStructure.md)
 - [Automated Tests](tests/Tests.md)
 - [Objective-C Generator Internals](objcgen/Internals.md)
-
