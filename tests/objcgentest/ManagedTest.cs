@@ -51,6 +51,12 @@ namespace ExecutionTests
 		}
 
 		[Test]
+		public void macOS_Extension_With_Spaces ()
+		{
+			RunManagedTests (Platform.macOSModern, debug: true, forceSpaces: true, additionalArgs: "--extension");
+		}
+
+		[Test]
 		[TestCase (true)]
 		[TestCase (false)]
 		public void iOS_simulator (bool debug)
@@ -142,7 +148,7 @@ namespace ExecutionTests
 			return File.ReadAllLines (path).Count ((v) => System.Text.RegularExpressions.Regex.IsMatch (v, "^\\s*-\\s*[(]\\s*void\\s*[)]\\s*test"));
 		}
 
-		void RunManagedTests (Platform platform, string test_destination = "", bool debug = true)
+		void RunManagedTests (Platform platform, string test_destination = "", bool debug = true, bool forceSpaces = false, string additionalArgs = "")
 		{
 			string dllname;
 			string dlldir;
@@ -209,6 +215,14 @@ namespace ExecutionTests
 			// This will build all the managed.dll variants, which is easier than calculating the relative path _as the makefile sees it_ to pass as the target.
 			Asserts.RunProcess ("make", $"all CONFIG={configuration} -C {Utils.Quote (Path.Combine (XcodeProjectGenerator.TestsRootDirectory, "managed"))}", "build " + Path.GetFileName (dll_path));
 
+			if (forceSpaces) {
+				string dll_folder = Path.GetDirectoryName (dll_path);
+				Directory.CreateDirectory (Path.Combine (dll_folder, "with spaces"));
+				string dll_path_with_spaces = Path.Combine (dll_folder, "with spaces", Path.GetFileName (dll_path));
+				File.Copy (dll_path, dll_path_with_spaces, true);
+				dll_path = dll_path_with_spaces;
+			}
+
 			var outdir = tmpdir + "/out";
 			var projectName = "foo";
 			var args = new List<string> ();
@@ -220,6 +234,8 @@ namespace ExecutionTests
 			args.Add ("--target=framework");
 			args.Add ($"--platform={platform}");
 			args.Add ($"--abi={abi}");
+			if (additionalArgs.Length > 0)
+				args.Add (additionalArgs);
 			Asserts.Generate ("generate", args.ToArray ());
 
 			var framework_path = Path.Combine (outdir, Path.GetFileNameWithoutExtension (dll_path) + ".framework");
